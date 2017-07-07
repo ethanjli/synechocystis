@@ -9,6 +9,7 @@ import pandas as pd
 import util
 from util import length_name, time_name, speed_name
 from util import displacement_component_name, velocity_component_name
+from util import convert_length, convert_time, convert_speed
 
 OUTPUT_LENGTH_UNIT = 'mm'
 OUTPUT_TIME_UNIT = 'min'
@@ -29,19 +30,12 @@ def get_parameters():
                         help='Units of length in input cell tracks file.')
     parser.add_argument('--time_unit', default='min',
                         help='Units of time in input cell tracks file.')
-    parser.add_argument('--image_height', default=720,
-                        help=('Height of timelapse image, in length_units. '
-                              'This is used to set the origin to the lower left corner '
-                              'for consistency with mathematical conventions, '
-                              'rather than the upper right corner from image '
-                              'representation conventions'))
 
     args = parser.parse_args()
     input_path = args.input
     output_path = args.output
     length_unit = args.length_unit
     time_unit = args.time_unit
-    image_height = args.image_height
     if not output_path:
         input_name = os.path.splitext(input_path)[0]
         if input_name.endswith('in unit per min'):
@@ -52,11 +46,11 @@ def get_parameters():
             output_path = '{}{}'.format(input_name.replace('pixels', 'mm'), '.csv')
         else:
             output_path = '{}{}'.format(input_name, ' processed.csv')
-    return (input_path, output_path, length_unit, time_unit, image_height)
+    return (input_path, output_path, length_unit, time_unit)
 
-def process_input(input_path, length_unit, time_unit, image_height):
+def process_input(input_path, length_unit, time_unit):
     # Read the tracks
-    df = pd.read_csv(input_path, header=0,
+    df = pd.read_csv(input_path, header=0, sep='\t',
                      names=['track', 'slice',
                             length_name('x', length_unit),
                             length_name('y', length_unit),
@@ -75,22 +69,22 @@ def process_input(input_path, length_unit, time_unit, image_height):
     )
 
     # Add unit conversion columns
-    length_conversion = util.CONVERSIONS[length_unit][OUTPUT_LENGTH_UNIT]
-    time_conversion = util.CONVERSIONS[time_unit][OUTPUT_TIME_UNIT]
     for column in ['x', 'y', 'distance']:
         col_in = df[length_name(column, length_unit)]
         if column == 'y' and OUTPUT_LENGTH_UNIT != 'px':
-            col_out = (image_height - col_in) * length_conversion
+            col_out = convert_length(util.IMAGE_HEIGHT_PX - col_in,
+                                     length_unit, OUTPUT_LENGTH_UNIT)
         else:
-            col_out = col_in * length_conversion
+            col_out = convert_length(col_in, length_unit, OUTPUT_LENGTH_UNIT)
         df[length_name(column, OUTPUT_LENGTH_UNIT)] = col_out
     for column in ['duration']:
         col_in = df[time_name(column, time_unit)]
-        col_out = col_in * time_conversion
+        col_out = convert_time(col_in, time_unit, OUTPUT_TIME_UNIT)
         df[time_name(column, OUTPUT_TIME_UNIT)] = col_out
     for column in ['speed']:
         col_in = df[speed_name(column, length_unit, time_unit)]
-        col_out = col_in * length_conversion / time_conversion
+        col_out = convert_speed(col_in, length_unit, OUTPUT_LENGTH_UNIT,
+                                time_unit, OUTPUT_TIME_UNIT)
         df[speed_name(column, OUTPUT_LENGTH_UNIT, OUTPUT_TIME_UNIT)] = col_out
 
     return df
@@ -119,8 +113,8 @@ def calculate_metrics(df):
     return df
 
 def main():
-    (input_path, output_path, length_unit, time_unit, image_height) = get_parameters()
-    df = process_input(input_path, length_unit, time_unit, image_height)
+    (input_path, output_path, length_unit, time_unit) = get_parameters()
+    df = process_input(input_path, length_unit, time_unit)
     df = calculate_metrics(df)
     df.to_csv(output_path, index=False)
 
