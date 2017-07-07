@@ -83,8 +83,8 @@ def process_input(input_path, length_unit, time_unit):
         df[time_name(column, OUTPUT_TIME_UNIT)] = col_out
     for column in ['speed']:
         col_in = df[speed_name(column, length_unit, time_unit)]
-        col_out = convert_speed(col_in, length_unit, OUTPUT_LENGTH_UNIT,
-                                time_unit, OUTPUT_TIME_UNIT)
+        col_out = convert_speed(col_in, length_unit, time_unit,
+                                OUTPUT_LENGTH_UNIT, OUTPUT_TIME_UNIT)
         df[speed_name(column, OUTPUT_LENGTH_UNIT, OUTPUT_TIME_UNIT)] = col_out
 
     return df
