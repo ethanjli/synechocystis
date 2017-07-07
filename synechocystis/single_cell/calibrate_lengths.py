@@ -6,42 +6,16 @@ import argparse
 import numpy as np
 import pandas as pd
 
-CONVERSIONS = {
-    'px': {
-        'px': 1.0,
-        'mm': 1.0 / 4440
-    },
-    'min': {
-        'min': 1.0,
-        's': 60.0
-    }
-}
+import util
+from util import length_name, time_name, speed_name
+from util import displacement_component_name, velocity_component_name
+
 OUTPUT_LENGTH_UNIT = 'mm'
 OUTPUT_TIME_UNIT = 'min'
 
-def length_name(name, unit):
-    return '{}_{}'.format(name, unit)
-
-def time_name(name, unit):
-    return '{}_{}'.format(name, unit)
-
-def speed_name(name, length_unit, time_unit):
-    return '{}_{}/{}'.format(name, length_unit, time_unit)
-
-def displacement_component_name(name, unit):
-    return '{}_displacement_{}'.format(name, unit)
-
-def velocity_component_name(name, length_unit, time_unit):
-    return '{}_velocity_{}/{}'.format(name, length_unit, time_unit)
-
-def is_valid_file(path):
-    if not os.path.isfile(path):
-        raise argparse.ArgumentTypeError('{} does not exist!'.format(path))
-    return path
-
 def get_parameters():
     parser = argparse.ArgumentParser(description='Apply length calibration to cell tracks.')
-    parser.add_argument('input', type=is_valid_file,
+    parser.add_argument('input', type=util.is_valid_file,
                         help='Path of input cell tracks file (should be CSV).')
     parser.add_argument('--output', default='',
                         help=('Path of output cell tracks file (should be CSV). '
@@ -101,8 +75,8 @@ def process_input(input_path, length_unit, time_unit, image_height):
     )
 
     # Add unit conversion columns
-    length_conversion = CONVERSIONS[length_unit][OUTPUT_LENGTH_UNIT]
-    time_conversion = CONVERSIONS[time_unit][OUTPUT_TIME_UNIT]
+    length_conversion = util.CONVERSIONS[length_unit][OUTPUT_LENGTH_UNIT]
+    time_conversion = util.CONVERSIONS[time_unit][OUTPUT_TIME_UNIT]
     for column in ['x', 'y', 'distance']:
         col_in = df[length_name(column, length_unit)]
         if column == 'y' and OUTPUT_LENGTH_UNIT != 'px':
@@ -148,7 +122,7 @@ def main():
     (input_path, output_path, length_unit, time_unit, image_height) = get_parameters()
     df = process_input(input_path, length_unit, time_unit, image_height)
     df = calculate_metrics(df)
-    df.to_csv(output_path)
+    df.to_csv(output_path, index=False)
 
 
 if __name__ == '__main__':
