@@ -14,7 +14,7 @@ OUTPUT_LENGTH_UNIT = 'mm'
 OUTPUT_TIME_UNIT = 'min'
 
 def get_parameters():
-    parser = argparse.ArgumentParser(description='Apply length calibration to cell tracks.')
+    parser = argparse.ArgumentParser(description='Process cell tracks.')
     parser.add_argument('input', type=util.is_valid_file,
                         help='Path of input cell tracks file (should be CSV).')
     parser.add_argument('--output', default='',
@@ -24,7 +24,7 @@ def get_parameters():
                               'file extension, defaults to the input file with '
                               '"unit" or "px" or "pixels" replaced with "mm". '
                               'Otherwise, defaults to the file-extension-less input name '
-                              'with the suffix " calibrated.csv".'))
+                              'with the suffix " processed.csv".'))
     parser.add_argument('--length_unit', default='px',
                         help='Units of length in input cell tracks file.')
     parser.add_argument('--time_unit', default='min',
@@ -51,7 +51,7 @@ def get_parameters():
         elif input_name.endswith('in pixels per min'):
             output_path = '{}{}'.format(input_name.replace('pixels', 'mm'), '.csv')
         else:
-            output_path = '{}{}'.format(input_name, ' calibrated.csv')
+            output_path = '{}{}'.format(input_name, ' processed.csv')
     return (input_path, output_path, length_unit, time_unit, image_height)
 
 def process_input(input_path, length_unit, time_unit, image_height):
