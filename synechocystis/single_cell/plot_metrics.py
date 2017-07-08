@@ -49,13 +49,14 @@ def generate_plots(df, output_path, file_format):
     image_max_length = convert_length(max(IMAGE_HEIGHT_PX, IMAGE_WIDTH_PX),
                                       'px', LENGTH_UNIT)
 
-    # Displacements histogram
+    # Directional displacements histogram
+    plt.figure()
     columns = [
         displacement_component_name('x', LENGTH_UNIT),
         displacement_component_name('y', LENGTH_UNIT)
     ]
     ax = df.loc[:, columns].plot.hist(
-        alpha=0.5, xlim=[-1 * image_max_length, image_max_length],
+        alpha=0.5, xlim=[-image_max_length, image_max_length],
         title=r'$x-$ and $y-$ Displacements', figsize=(8, 6)
     )
     ax.legend(['x', 'y'])
@@ -70,9 +71,20 @@ def generate_plots(df, output_path, file_format):
     fig = plt.figure(figsize=(8, 8))
     plt.polar(df[columns[0]].dropna(), df[columns[1]].dropna(), 'o')
     ax = fig.axes[0]
+    ax.set_xlabel(r'Direction ($^\circ$)')
     ax.set_ylim(0, image_max_length)
+    ax.set_ylabel('Displacement (mm)')
     ax.set_rlabel_position(90)
     plt.savefig(output_path + ' distancespolar.' + file_format, format=file_format)
+
+    # Distances histogram
+    plt.figure()
+    ax = df[length_name('distance', LENGTH_UNIT)].plot.hist(
+        xlim=[-image_max_length, image_max_length],
+        title='Net Distances', figsize=(8, 6)
+    )
+    ax.set_xlabel('Distance (mm)')
+    plt.savefig(output_path + ' distances.' + file_format, format=file_format)
 
 def main():
     (input_path, output_path, file_format) = get_parameters()
